@@ -1,9 +1,21 @@
-const mongoose = require('mongoose');
+const { pool } = require('./db');
 
-const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
-  role: { type: String, default: 'admin' }
-});
+async function findByUsername(username) {
+  const [rows] = await pool.query(
+    'SELECT id, username, passwordHash, role FROM users WHERE username = ?',
+    [username]
+  );
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return { ...row, _id: row.id };
+}
 
-module.exports = mongoose.model('User', UserSchema);
+async function create({ username, passwordHash, role }) {
+  const [result] = await pool.query(
+    'INSERT INTO users (username, passwordHash, role) VALUES (?, ?, ?)',
+    [username, passwordHash, role || 'admin']
+  );
+  return { id: result.insertId, username, role };
+}
+
+module.exports = { findByUsername, create };

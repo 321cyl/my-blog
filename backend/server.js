@@ -1,10 +1,10 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+const { testConnection } = require('./models/db');
 const Post = require('./models/Post');
 const User = require('./models/User');
 
@@ -15,27 +15,23 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mysecret123';
 
-// ========== 测试接口 ==========
+// 测试接口
 app.get('/', (req, res) => {
   res.send('后端服务已启动！');
 });
 
-// ========== 登录接口 ==========
+// 登录接口
 app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-
-    // 1. 查找用户
-    const user = await User.findOne({ username });
+    const user = await User.findByUsername(username);
     if (!user) return res.status(401).json({ msg: '用户名或密码错误' });
 
-    // 2. 校验密码
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(401).json({ msg: '用户名或密码错误' });
 
-    // 3. 生成 token
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user.id, role: user.role },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -46,10 +42,10 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// ========== 鉴权中间件 ==========
+// 鉴权中间件
 function auth(req, res, next) {
   const header = req.headers.authorization;
-  const token = header && header.split(' ')[1]; // 取 "Bearer xxx" 里的 xxx
+  const token = header && header.split(' ')[1];
 
   if (!token) return res.status(401).json({ msg: '未登录' });
 
@@ -62,19 +58,16 @@ function auth(req, res, next) {
   }
 }
 
-// ========== 文章接口 ==========
-
-// 获取所有文章（公开）
+// 文章接口
 app.get('/api/posts', async (req, res) => {
   try {
-    const posts = await Post.find().sort({ createdAt: -1 });
+    const posts = await Post.findAll();
     res.json(posts);
   } catch (err) {
     res.status(500).json({ msg: '获取文章失败', error: err.message });
   }
 });
 
-// 获取单篇文章（公开）
 app.get('/api/posts/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -85,7 +78,6 @@ app.get('/api/posts/:id', async (req, res) => {
   }
 });
 
-// 新建文章（需登录）
 app.post('/api/posts', auth, async (req, res) => {
   try {
     const post = await Post.create({
@@ -100,24 +92,20 @@ app.post('/api/posts', auth, async (req, res) => {
   }
 });
 
-// 删除文章（需登录）
 app.delete('/api/posts/:id', auth, async (req, res) => {
   try {
-    await Post.findByIdAndDelete(req.params.id);
+    await Post.remove(req.params.id);
     res.json({ msg: '删除成功' });
   } catch (err) {
     res.status(500).json({ msg: '删除失败', error: err.message });
   }
 });
 
-// ========== 数据库连接 ==========
-const DB_URL = 'mongodb://127.0.0.1:27017/blog';
-mongoose.connect(DB_URL)
-  .then(() => console.log('✅ 数据库连接成功'))
-  .catch(err => console.log('❌ 数据库连接失败:', err.message));
-
-// ========== 启动服务器 ==========
+// 启动服务器
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 后端跑在 http://localhost:${PORT}`);
+
+testConnection().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 后端跑在 http://localhost:${PORT}`);
+  });
 });
