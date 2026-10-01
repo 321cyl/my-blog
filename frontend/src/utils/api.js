@@ -1,17 +1,15 @@
-import axios from 'axios'
+import axios from 'axios';
 
-// 后端地址
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api'
-})
+  baseURL: '/api'
+});
 
-// 请求前自动带上 token
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return config
-})
+  return config;
+});
 
-export default api
+export default api;

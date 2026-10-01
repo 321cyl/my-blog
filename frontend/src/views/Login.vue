@@ -39,16 +39,14 @@ async function handleLogin() {
   errorMsg.value = ''
 
   try {
-    const res = await api.post('/login', {
+    const res = await api.post('/auth/login', {
       username: username.value,
       password: password.value
     })
 
-    // 把 token 存到 localStorage
     localStorage.setItem('token', res.data.token)
     localStorage.setItem('username', res.data.username)
 
-    // 跳转到后台
     router.push('/admin')
   } catch (err) {
     errorMsg.value = err.response?.data?.msg || '登录失败，请稍后重试'
@@ -91,6 +89,7 @@ input {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 input:focus {
