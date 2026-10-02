@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Post = require('../../models/Post');
+const Post = require('../../models/Post.cjs');
 
 function auth(req) {
   const header = req.headers.authorization;

@@ -1,4 +1,4 @@
-const { pool } = require('./db');
+const { pool } = require('./db.cjs');
 
 async function findByUsername(username) {
   const [rows] = await pool.query(

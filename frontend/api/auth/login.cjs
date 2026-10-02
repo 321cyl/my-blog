@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../../models/User');
+const User = require('../../models/User.cjs')
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
